@@ -23,27 +23,27 @@ public class EmployeeController {
     public ResponseEntity saveEmployee(@RequestBody EmployeeDTO employeeDTO) {
         try {
             String res = employeeService.saveEmployee(employeeDTO);
-            if (res.equals("08")) {
-                responseDTO.setCode(VarList.RSP_DUPLICATE);
-                responseDTO.setMessage("Sucess");
+            if (res.equals(VarList.RSP_SUCCESS)) {
+                responseDTO.setCode(VarList.RSP_SUCCESS);
+                responseDTO.setMessage("Success");
                 responseDTO.setContent(employeeDTO);
-                return new ResponseEntity(responseDTO, HttpStatus.ACCEPTED);
-            } else if (res.equals("06")) {
+                return new ResponseEntity(responseDTO, HttpStatus.CREATED); // 201 for new resource
+            } else if (res.equals(VarList.RSP_DUPLICATE)) {
                 responseDTO.setCode(VarList.RSP_DUPLICATE);
-                responseDTO.setMessage("Employee Registered");
-                responseDTO.setContent(employeeDTO);
-                return new ResponseEntity(responseDTO, HttpStatus.BAD_REQUEST);
+                responseDTO.setMessage("Employee already exists");
+                responseDTO.setContent(null);
+                return new ResponseEntity(responseDTO, HttpStatus.BAD_REQUEST); // 400 for duplicate
             } else {
                 responseDTO.setCode(VarList.RSP_FAIL);
-                responseDTO.setMessage("error");
+                responseDTO.setMessage("Error");
                 responseDTO.setContent(null);
-                return new ResponseEntity(responseDTO, HttpStatus.BAD_REQUEST);
+                return new ResponseEntity(responseDTO, HttpStatus.BAD_REQUEST); // 400 for other failures
             }
         } catch (Exception ex) {
             responseDTO.setCode(VarList.RSP_FAIL);
             responseDTO.setMessage(ex.getMessage());
             responseDTO.setContent(null);
-            return new ResponseEntity(responseDTO, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity(responseDTO, HttpStatus.INTERNAL_SERVER_ERROR); // 500 for exceptions
         }
     }
 }
