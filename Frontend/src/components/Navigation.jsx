@@ -7,9 +7,12 @@ function Navigation() {
         <a href="/" className="text-2xl font-bold italic font-serif ">
         Employees
         </a>
-        <div className="hidden md:flex space-x-6">
-          <Link to={`/`} className="transition-colors">
-            Home
+        <div className="hidden md:flex space-x-6 mr-auto">
+        <Link to={`/view`} className="transition-colors">
+            View
+          </Link>
+          <Link to={`/add`} className="transition-colors">
+            Add
           </Link>
         </div>
       </div>
