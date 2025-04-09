@@ -54,10 +54,10 @@ const Add = () => {
 
   return (
     <div className="flex justify-center items-center pt-12">  {/* <-- Reduced top margin */}
-      <Card className="w-full sm:w-80">  {/* <-- Reduced card size */}
+      <Card className="w-full sm:w-[450px]">  {/* <-- Increased card size slightly */}
         <CardHeader>
           <CardTitle>Employee Details</CardTitle>
-          <CardDescription>Please add your details</CardDescription>
+          <CardDescription>Please add Emplyee details</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>  {/* <-- Added this to pass the form object */}
