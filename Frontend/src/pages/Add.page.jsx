@@ -1,5 +1,4 @@
-// src/pages/Add.page.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,63 +16,97 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLocation, useNavigate } from 'react-router';
+import { useSaveEmployeeMutation, useUpdateEmployeeMutation, useGetEmployeeByIdQuery } from "@/lib/employeeApi.js";
 
-// Import the RTK Query hook
-import { useSaveEmployeeMutation } from "@/lib/employeeApi.js";  // Adjust the path as needed
 
-// Define the schema for validation using Zod
 const formSchema = z.object({
-  empName: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  empAddress: z.string().min(2, {
-    message: "Address must be at least 2 characters.",
-  }),
-  empNumber: z.string().min(10, {
-    message: "Mobile number must be at least 10 digits.",
-  }),
+  empID: z.number().optional(),
+  empName: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  empAddress: z.string().min(2, { message: "Address must be at least 2 characters." }),
+  empNumber: z.string().min(10, { message: "Mobile number must be at least 10 digits." }),
 });
 
 const Add = () => {
-  // Initialize the form using useForm with validation resolver
+  const location = useLocation();
+  const navigate = useNavigate();
+  const empID = location.state?.empID; // Get empID from state if updating
+  const isUpdate = !!empID;
+
+  const { data: employee, isLoading: isFetching, error: fetchError } = isUpdate
+    ? useGetEmployeeByIdQuery(empID)
+    : { data: null, isLoading: false, error: null };
+
+  const [saveEmployee] = useSaveEmployeeMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      empID: isUpdate ? empID : 0,
       empName: '',
       empAddress: '',
       empNumber: '',
     },
   });
 
-  // Use the saveEmployee mutation from employeeApi
-  const [saveEmployee, { isLoading, error, isError, isSuccess }] = useSaveEmployeeMutation();
+  useEffect(() => {
+    if (isUpdate && employee?.content) {
+      const emp = employee.content;
+      form.reset({
+        empID: emp.empID,
+        empName: emp.empName,
+        empAddress: emp.empAddress,
+        empNumber: emp.empNumber,
+      });
+    }
+  }, [employee, isUpdate, form]);
 
-  // Function to handle form submission
   const onSubmit = async (data) => {
     try {
-      const result = await saveEmployee(data).unwrap();
-      console.log('Employee saved successfully:', result);
-      // You can add a success notification or redirect here if desired.
+      if (isUpdate) {
+        await updateEmployee(data).unwrap();
+        console.log('Employee updated successfully');
+      } else {
+        await saveEmployee(data).unwrap();
+        console.log('Employee saved successfully');
+      }
+      navigate('/');
     } catch (err) {
-      console.error('Failed to save employee:', err);
-      // Optionally, display an error notification here.
+      console.error('Failed to save/update employee:', err);
     }
   };
+
+  if (isUpdate && isFetching) return <div>Loading...</div>;
+  if (isUpdate && fetchError) return <div>Error: {fetchError.message}</div>;
 
   return (
     <div className="flex justify-center items-center pt-12">
       <Card className="w-full sm:w-[450px]">
         <CardHeader>
-          <CardTitle>Employee Details</CardTitle>
-          <CardDescription>Please add Employee details</CardDescription>
+          <CardTitle>{isUpdate ? 'Update Employee' : 'Employee Details'}</CardTitle>
+          <CardDescription>{isUpdate ? 'Update employee details' : 'Please add Employee details'}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {isUpdate && (
+                <FormField
+                  control={form.control}
+                  name="empID"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID</FormLabel>
+                      <FormControl>
+                        <Input disabled value={field.value} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="empName"
@@ -126,11 +158,9 @@ const Add = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Submitting...' : 'Submit'}
+              <Button type="submit">
+                {isUpdate ? 'Update' : 'Submit'}
               </Button>
-              {isError && <p className="text-red-600">Error: {error?.data?.message || 'Submission failed'}</p>}
-              {isSuccess && <p className="text-green-600">Employee saved successfully!</p>}
             </form>
           </Form>
         </CardContent>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -6,24 +6,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from '@/components/ui/button'
-
-const employeeData = [
-  { id: 1, name: "Sharada", address: "Rathnapura" },
-  { id: 2, name: "Sunil", address: "Kandy" },
-  { id: 3, name: "Nimal", address: "Colombo" },
-  { id: 4, name: "Kavinda", address: "Galle" },
-];
+} from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { useGetAllEmployeesQuery, useDeleteEmployeeMutation } from '@/lib/employeeApi.js'; // Import RTK Query hooks
+import { Link } from 'react-router';
 
 function Homepage() {
+  const { data: employees, isLoading, error } = useGetAllEmployeesQuery(); // Fetch all employees
+  const [deleteEmployee] = useDeleteEmployeeMutation(); // Mutation for deleting an employee
+
+  const handleDelete = async (empID) => {
+    try {
+      await deleteEmployee(empID).unwrap(); // Delete employee and unwrap the result
+      // Cache invalidation will automatically refetch the employee list
+    } catch (err) {
+      console.error('Failed to delete employee:', err);
+    }
+  };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
     <div className="flex justify-center items-start mt-10 px-2">
       <Card className="w-full sm:w-[500px] md:w-[600px] lg:w-[700px]">
@@ -41,19 +51,26 @@ function Homepage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {employeeData.map((employee) => (
-                <TableRow key={employee.id}>
-                  <TableCell>{employee.id}</TableCell>
-                  <TableCell>{employee.name}</TableCell>
-                  <TableCell>{employee.address}</TableCell>
+              {employees?.content?.map((employee) => (
+                <TableRow key={employee.empID}>
+                  <TableCell>{employee.empID}</TableCell>
+                  <TableCell>{employee.empName}</TableCell>
+                  <TableCell>{employee.empAddress}</TableCell>
                   <TableCell className="space-x-2">
-                    <Button className="bg-green-500 hover:bg-green-700 text-white">
-                      View
-                    </Button>
-                    <Button className="bg-blue-500 hover:bg-blue-700 text-white">
-                      Update
-                    </Button>
-                    <Button className="bg-red-500 hover:bg-red-700 text-white">
+                    <Link to={`/view/${employee.empID}`}>
+                      <Button className="bg-green-500 hover:bg-green-700 text-white">
+                        View
+                      </Button>
+                    </Link>
+                    <Link to="/add" state={{ empID: employee.empID }}>
+                      <Button className="bg-blue-500 hover:bg-blue-700 text-white">
+                        Update
+                      </Button>
+                    </Link>
+                    <Button
+                      className="bg-red-500 hover:bg-red-700 text-white"
+                      onClick={() => handleDelete(employee.empID)}
+                    >
                       Delete
                     </Button>
                   </TableCell>
